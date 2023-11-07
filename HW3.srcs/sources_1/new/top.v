@@ -38,18 +38,18 @@ module top (
     wire locked, rst; 
     
     //for PLL
-    clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk); //for Zedboard
+    clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk); //for Zedboard   100MHz -> 6MHz
     //assign clk_6mhz = clk;  //for Simulation only
 
     //for reset signal generation
     assign rst = reset_poweron | (~locked); 
 
     //for speed control: SIZE=6000000(x1), SIZE=600000(x10), SIZE=6000(x1000)
-    gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst (clk_6mhz, rst, clock_en); 
+    gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst (clk_6mhz, rst, clock_en); // 6MHz clk이 6M번 들어가면 1 clk 동안 1 생성 -> 1s 에 1pulse 생성
     clock clock_inst (clk_6mhz, rst, clock_en, digit, up, down, sec0, sec1, min0, min1, hrs0, hrs1); 
     
     // for debouncing, use btn_pulse that has only 1 cycle duration) 
-    debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, ,btn_pulse);
+    debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, ,btn_pulse);  // 4bit btn -> pulse 생성
     assign {down, up, right, left} = btn_pulse;
 
     //7-seg decoder
