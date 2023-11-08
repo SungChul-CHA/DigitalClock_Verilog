@@ -24,7 +24,7 @@ module clock(
     input clk,
     input rst,
     input en,
-    output [0:0] digit,
+    input [5:0] digit,
     input up,
     input down,
     output [0:0] sec0,
