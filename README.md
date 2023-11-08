@@ -60,3 +60,5 @@
 >
 > hrs1 2이고 hrs0 3이고 다음 hrs0_en에서
 > hrs1 0, hrs0 0으로 초기화
+
+![timing](./study/time_trans.jpeg)
