@@ -1,79 +1,73 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2023/11/07 18:45:16
-// Design Name: 
-// Module Name: top
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
-
-// Need to check before Generate Bitstream.
-// 1. clk_wz_0   2. clock_en SIZE   3. seg_shift SIZE 
 module top (
     input clk,
     input reset_poweron,
-    input [3:0] btn, 
-    output reg [7:0] seg_data, 
-    output reg [5:0] seg_com
+    input [3:0] btn,
+    output reg [7:0] seg_data,
+    output [7:0] leds,
+    output reg[5:0] seg_com
     );
+
+    localparam IDLE_ST = 3'd0, WATCH_ST = 3'd1,
+    TIMER_ST = 3'd2, ALARM_ST = 3'd3, ADJUST_ST = 3'd4;
     
     wire clk_6mhz;
-    wire [6:0] sec0_out, sec1_out, min0_out, min1_out, hrs0_out, hrs1_out; 
-    wire [3:0] sec0, sec1, min0, min1, hrs0, hrs1;
-    wire clock_en;
+    wire [6:0] sec0_seg, sec1_seg, min0_seg, min1_seg, hrs0_seg, hrs1_seg;
+    wire [3:0] sec0 [3:0], min0 [3:0], hrs0 [3:0];
+    wire [2:0] sec1 [3:0], min1 [3:0], hrs1 [3:0];
+    wire clock_en, watch_en, timer_en, alarm_en;
     reg [5:0] digit;
-    wire left, right, up, down; 
-    wire [3:0] btn_pulse; 
-    wire locked, rst; 
+    wire left, up, reset, mode;
+    wire [2:0] l_btn;
+    wire [3:0] btn_out;
+    wire [3:0] btn_pulse;
+    wire locked, rst, seg_shift;
+    reg [2:0] c_state, n_state;
+
+    clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk);
+    assign rst = reset_poweron | (~locked);
     
-    //for PLL
-    clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk); //for Zedboard   100MHz -> 6MHz
-//    assign clk_6mhz = clk;  //for Simulation only
-
-    //for reset signal generation
-    assign rst = reset_poweron | (~locked); 
-
-    //for speed control: SIZE=6000000(x1), SIZE=600000(x10), SIZE=6000(x1000), SIZE=60 (for simulation)
-    gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst (clk_6mhz, rst, clock_en); // 6MHz clk이 6M번 들어가면 1 clk 동안 1 생성 -> 1s 에 1pulse 생성
-    clock clock_inst (clk_6mhz, rst, clock_en, digit, up, down, sec0, sec1, min0, min1, hrs0, hrs1); 
-    
-    // for debouncing, use btn_pulse that has only 1 cycle duration) 
-    debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, ,btn_pulse);  // 4bit btn -> pulse 생성
-    assign {down, up, right, left} = btn_pulse;
-
-    //7-seg decoder
-    dec7 dec_sec0_inst (sec0, sec0_out); 
-    dec7 dec_sec1_inst (sec1, sec1_out); 
-    dec7 dec_min0_inst (min0, min0_out); 
-    dec7 dec_min1_inst (min1, min1_out); 
-    dec7 dec_hrs0_inst (hrs0, hrs0_out); 
-    dec7 dec_hrs1_inst (hrs1, hrs1_out);
-
-    //digit[5:0] generation code here with "left" or "right" button
-    //digit[5:0] = 100000,010000,001000,000100,000010,000001,100000,010000……
     always @ (posedge clk_6mhz, posedge rst) begin
-        if (rst) digit <= 6'b100000;
-        else if (left) digit <= {digit[0], digit[5:1]};
-        else if (right) digit <= {digit[4:0], digit[5]};
+        if (rst) c_state <= IDLE_ST;
+        else c_state <= n_state;
     end
+    
+    always @ (*) begin
+        case (c_state)
+            IDLE_ST: begin 
+                if(mode) n_state = WATCH_ST;
+                else if (l_btn[0] | l_btn[1] | l_btn[2]) n_state = ADJUST_ST;
+                else n_state = IDLE_ST;
+            end
+            WATCH_ST: begin
+                n_state = TIMER_ST;
+            end
+            TIMER_ST: n_state = IDLE_ST;
+            default: n_state = IDLE_ST;
+        endcase
+    
+    end
+    
+    gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst (clk_6mhz, rst, clock_en);
+    clock clock_inst (clk_6mhz, rst, clock_en, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
+    
+    stop_watch stop_watch_inst(clk_6mhz, rst, clock_en, btn_pulse, watch, lap, sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1]);
+    
+    debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, btn_out, btn_pulse);
+    assign {left, up, reset, mode} = btn_pulse;
 
-    wire seg_shift;
+    clk_divider #(.DIVISOR(6000000)) clk_divider_inst0 (clk_6mhz, btn_out[0], l_btn[0]);
+    clk_divider #(.DIVISOR(6000000)) clk_divider_inst1 (clk_6mhz, btn_out[1], l_btn[1]);
+    clk_divider #(.DIVISOR(6000000)) clk_divider_inst2 (clk_6mhz, btn_out[2], l_btn[2]);
+    
+    dec7 dec_sec0_inst (sec0[0], sec0_out); 
+    dec7 dec_sec1_inst (sec1[0], sec1_out); 
+    dec7 dec_min0_inst (min0[0], min0_out); 
+    dec7 dec_min1_inst (min1[0], min1_out); 
+    dec7 dec_hrs0_inst (hrs0[0], hrs0_out); 
+    dec7 dec_hrs1_inst (hrs1[0], hrs1_out);
+    
+    
     gen_counter_en #(.SIZE(10000)) gen_clock_en_inst1 (clk_6mhz, rst, seg_shift);   // SIZE = 10000
-    //seg_com[5:0] generation code here (shifts 600 times per second)
-    //seg_com[5:0] = 100000,010000,001000,000100,000010,000001,100000,010000……
     always @ (posedge clk_6mhz, posedge rst) begin
         if (rst) seg_com <= 6'b100000;
         else if (seg_shift) seg_com <= {seg_com[0], seg_com[5:1]};
@@ -81,20 +75,14 @@ module top (
 
     always @ (seg_com) begin
         case (seg_com)
-            6'b100000: seg_data = {sec0_out, digit[5]};
-            6'b010000: seg_data = {sec1_out, digit[4]};
-            6'b001000: seg_data = {min0_out, digit[3]};
-            6'b000100: seg_data = {min1_out, digit[2]};
-            6'b000010: seg_data = {hrs0_out, digit[1]};
-            6'b000001: seg_data = {hrs1_out, digit[0]};
+            6'b100000: seg_data = {sec0_out, 1'b1};
+            6'b010000: seg_data = {sec1_out, 1'b0};
+            6'b001000: seg_data = {min0_out, 1'b1};
+            6'b000100: seg_data = {min1_out, 1'b0};
+            6'b000010: seg_data = {hrs0_out, 1'b1};
+            6'b000001: seg_data = {hrs1_out, 1'b0};
             default: seg_data = 8'b0; 
         endcase
     end
-
+    
 endmodule
-
-
-
-
-
-
