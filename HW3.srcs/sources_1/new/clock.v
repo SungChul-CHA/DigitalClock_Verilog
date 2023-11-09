@@ -27,11 +27,11 @@ module clock(
     input [5:0] digit,
     input up,
     input down,
-    output [0:0] sec0,
-    output [0:0] sec1,
-    output [0:0] min0,
-    output [0:0] min1,
-    output [0:0] hrs0,
-    output [0:0] hrs1
+    output [3:0] sec0,
+    output [3:0] sec1,
+    output [3:0] min0,
+    output [3:0] min1,
+    output [3:0] hrs0,
+    output [3:0] hrs1
     );
 endmodule
