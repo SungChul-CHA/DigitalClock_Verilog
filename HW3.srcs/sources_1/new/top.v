@@ -62,10 +62,20 @@ module top (
 
     //digit[5:0] generation code here with "left" or "right" button
     //digit[5:0] = 100000,010000,001000,000100,000010,000001,100000,010000・・
+    always @ (posedge clk_6mhz, posedge rst) begin
+        if (rst) digit <= 6'b100000;
+        else if (left) digit <= {digit[0], digit[5:1]};
+        else if (right) digit <= {digit[4:0], digit[5]};
+    end
 
-
+    wire seg_shift;
+    gen_counter_en #(.SIZE(10000)) gen_clock_en_inst1 (clk_6mhz, rst, seg_shift);
     //seg_com[5:0] generation code here (shifts 600 times per second)
     //seg_com[5:0] = 100000,010000,001000,000100,000010,000001,100000,010000・・
+    always @ (posedge clk_6mhz, posedge rst) begin
+        if (rst) seg_com <= 6'b100000;
+        else if (seg_shift) seg_com <= {seg_com[0], seg_com[5:1]};
+    end
 
     always @ (seg_com) begin
         case (seg_com)
