@@ -20,6 +20,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
+// Need to check before Generate Bitstream.
+// 1. clk_wz_0   2. clock_en SIZE   3. seg_shift SIZE 
 module top (
     input clk,
     input reset_poweron,
@@ -38,14 +40,14 @@ module top (
     wire locked, rst; 
     
     //for PLL
-//    clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk); //for Zedboard   100MHz -> 6MHz
-    assign clk_6mhz = clk;  //for Simulation only
+    clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk); //for Zedboard   100MHz -> 6MHz
+//    assign clk_6mhz = clk;  //for Simulation only
 
     //for reset signal generation
     assign rst = reset_poweron | (~locked); 
 
     //for speed control: SIZE=6000000(x1), SIZE=600000(x10), SIZE=6000(x1000), SIZE=60 (for simulation)
-    gen_counter_en #(.SIZE(60)) gen_clock_en_inst (clk_6mhz, rst, clock_en); // 6MHz clk이 6M번 들어가면 1 clk 동안 1 생성 -> 1s 에 1pulse 생성
+    gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst (clk_6mhz, rst, clock_en); // 6MHz clk이 6M번 들어가면 1 clk 동안 1 생성 -> 1s 에 1pulse 생성
     clock clock_inst (clk_6mhz, rst, clock_en, digit, up, down, sec0, sec1, min0, min1, hrs0, hrs1); 
     
     // for debouncing, use btn_pulse that has only 1 cycle duration) 
@@ -69,7 +71,7 @@ module top (
     end
 
     wire seg_shift;
-    gen_counter_en #(.SIZE(1)) gen_clock_en_inst1 (clk_6mhz, rst, seg_shift);   // SIZE = 10000
+    gen_counter_en #(.SIZE(10000)) gen_clock_en_inst1 (clk_6mhz, rst, seg_shift);   // SIZE = 10000
     //seg_com[5:0] generation code here (shifts 600 times per second)
     //seg_com[5:0] = 100000,010000,001000,000100,000010,000001,100000,010000……
     always @ (posedge clk_6mhz, posedge rst) begin
