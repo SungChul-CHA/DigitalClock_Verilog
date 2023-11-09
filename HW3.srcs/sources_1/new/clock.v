@@ -43,7 +43,16 @@ module clock(
         else if (en) begin
             if (sec0 == 9) sec0 <= 0;
             else sec0 <= sec0 + 1;
-        end    
+        end
+        else if (digit == 6'b100000)
+            if (up) begin
+                if (sec0 == 9) sec0 <= 0;
+                else sec0 <= sec0 + 1;
+            end
+            else if(down) begin
+                if (sec0 == 0) sec0 <= 9;
+                else sec0 <= sec0 - 1;
+            end
     end
     
     always @ (posedge clk, posedge rst) begin
@@ -51,6 +60,15 @@ module clock(
         else if (sec1_en)
             if(sec1 == 5) sec1 <= 0;
             else sec1 <= sec1 + 1;
+        else if (digit == 6'b010000)
+            if (up) begin
+                if (sec1 == 5) sec1 <= 0;
+                else sec1 <= sec1 + 1;
+            end
+            else if(down) begin
+                if (sec1 == 0) sec1 <= 5;
+                else sec1 <= sec1 - 1;
+            end
     end
     
     always @ (posedge clk, posedge rst) begin
@@ -58,6 +76,15 @@ module clock(
         else if (min0_en)
             if (min0 == 9) min0 <= 0;
             else min0 <= min0 + 1;
+        else if (digit == 6'b001000)
+            if (up) begin
+                if (min0 == 9) min0 <= 0;
+                else min0 <= min0 + 1;
+            end
+            else if(down) begin
+                if (min0 == 0) min0 <= 9;
+                else min0 <= min0 - 1;
+            end
     end
     
     always @ (posedge clk, posedge rst) begin
@@ -65,6 +92,15 @@ module clock(
         else if (min1_en)
             if (min1 == 5) min1 <= 0;
             else min1 <= min1 + 1;
+        else if (digit == 6'b000100)
+            if (up) begin
+                if (min1 == 5) min1 <= 0;
+                else min1 <= min1 + 1;
+            end
+            else if(down) begin
+                if (min1 == 0) min1 <= 5;
+                else min1 <= min1 - 1;
+            end
     end
     
     always @ (posedge clk, posedge rst) begin
@@ -72,6 +108,15 @@ module clock(
         else if (hrs0_en)
             if (hrs0 == 9 | (hrs1 == 2 & hrs0 == 3)) hrs0 <= 0;
             else hrs0 <= hrs0 + 1;
+        else if (digit == 6'b000010)
+            if (up) begin
+                if (hrs0 == 9) hrs0 <= 0;
+                else hrs0 <= hrs0 + 1;
+            end
+            else if(down) begin
+                if (hrs0 == 0) hrs0 <= 9;
+                else hrs0 <= hrs0 - 1;
+            end
     end
     
     always @ (posedge clk, posedge rst) begin
@@ -80,8 +125,17 @@ module clock(
             if (hrs1 == 2) hrs1 <= 0;
             else hrs1 <= hrs1 + 1;
         end
+        else if (digit == 6'b000001)
+            if (up) begin
+                if (hrs1 == 2) hrs1 <= 0;
+                else hrs1 <= hrs1 + 1;
+            end
+            else if(down) begin
+                if (hrs1 == 0) hrs1 <= 2;
+                else hrs1 <= hrs1 - 1;
+            end
     end
-
+    
     assign sec1_en = (sec0 == 9 && en) ? 1'b1 : 1'b0;
     assign min0_en = (sec1 == 5 && sec1_en) ? 1'b1 : 1'b0;
     assign min1_en = (min0 == 9 && min0_en) ? 1'b1 : 1'b0;
