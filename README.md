@@ -12,20 +12,27 @@
 
 - dec7 (input dec_in, output dec_out)<br>
   dec_in : 0부터 9까지 input 숫자. dec_out : 7-segment 데이터
-  ![7segment](https://media.parallax.com/wp-content/uploads/2020/07/13155129/350-00027a-600x600.png.webp)
+  |<b>A graph displaying three clusters</b> |
+  | :--: |
+  | ![7segment](https://media.parallax.com/wp-content/uploads/2020/07/13155129/350-00027a-600x600.png.webp)|
 
-- mode 버튼 눌리면 다음 state로 넘어감
-  0 : default
-  1 : time
-  2 : stop watch
-  3 : timer
-  4 : alarm
+  // 7 어캐 찍히는지 확인
+  | dec_in | dec_out |
+  | :----: | :--------: |
+  | 0000 | 1111110, 0 |
+  | 0001 | 0110000, 0 |
+  | 0010 | 1101101, 0 |
+  | 0011 | 1111001, 0 |
+  | 0100 | 0110011, 0 |
+  | 0101 | 1011011, 0 |
+  | 0110 | 1011111, 0 |
+  | 0111 | 1110010, 0 |
+  | 1000 | 1111111, 0 |
+  | 1001 | 1111011, 0 |
 
 ---
 
-## 동작 구성
-
-### 0. DEFAULT_ST
+## 동작 구상
 
 > 100MHz 짜리를 6MHz 짜리의 clk_6mhz 로 나눔
 
@@ -60,5 +67,13 @@
 >
 > hrs1 2이고 hrs0 3이고 다음 hrs0_en에서
 > hrs1 0, hrs0 0으로 초기화
+
+> 나온 sec, min, hrs 데이터를 dec7에 넣어서 segment 데이터로 변환
+
+> seg_com 신호로 하나씩 선택하면서 seg_data 뿌림
+
+---
+
+## 타이밍도 구상
 
 ![timing](./study/time_trans.jpeg)
