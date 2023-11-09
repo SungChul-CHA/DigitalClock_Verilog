@@ -1,0 +1,11 @@
+0.7
+2020.2
+Oct 14 2022
+05:20:55
+C:/Xilinx/DigitalSystem/HW3/HW3.sim/sim_1/behav/xsim/glbl.v,1665704903,verilog,,,,glbl,,,,,,,,
+C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sim_1/new/tb_top.v,1699498359,verilog,,,,tb_top,,,../../../../HW3.gen/sources_1/ip/clk_wiz_0,,,,,
+C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/clock.v,1699499048,verilog,,C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/debounce.v,,clock,,,../../../../HW3.gen/sources_1/ip/clk_wiz_0,,,,,
+C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/debounce.v,1699353651,verilog,,C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/dec7.v,,debounce,,,../../../../HW3.gen/sources_1/ip/clk_wiz_0,,,,,
+C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/dec7.v,1699355379,verilog,,C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/gen_counter_en.v,,dec7,,,../../../../HW3.gen/sources_1/ip/clk_wiz_0,,,,,
+C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/gen_counter_en.v,1699353751,verilog,,C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/top.v,,gen_counter_en,,,../../../../HW3.gen/sources_1/ip/clk_wiz_0,,,,,
+C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sources_1/new/top.v,1699499510,verilog,,C:/Xilinx/DigitalSystem/HW3/HW3.srcs/sim_1/new/tb_top.v,,top,,,../../../../HW3.gen/sources_1/ip/clk_wiz_0,,,,,

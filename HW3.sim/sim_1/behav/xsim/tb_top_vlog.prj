@@ -1,0 +1,14 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  --include "../../../../HW3.gen/sources_1/ip/clk_wiz_0" \
+"../../../../HW3.srcs/sources_1/new/clock.v" \
+"../../../../HW3.srcs/sources_1/new/debounce.v" \
+"../../../../HW3.srcs/sources_1/new/dec7.v" \
+"../../../../HW3.srcs/sources_1/new/gen_counter_en.v" \
+"../../../../HW3.srcs/sources_1/new/top.v" \
+"../../../../HW3.srcs/sim_1/new/tb_top.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

@@ -82,10 +82,10 @@ module clock(
         end
     end
 
-    assign sec1_en = (sec0 == 0 && en) ? 1'b1 : 1'b0;
-    assign min0_en = (sec1 == 0 && sec1_en) ? 1'b1 : 1'b0;
-    assign min1_en = (min0 == 0 && min0_en) ? 1'b1 : 1'b0;
-    assign hrs0_en = (min1 == 0 && min1_en) ? 1'b1 : 1'b0;
-    assign hrs1_en = (hrs0 == 0 && hrs0_en) ? 1'b1 : 1'b0;
+    assign sec1_en = (sec0 == 9 && en) ? 1'b1 : 1'b0;
+    assign min0_en = (sec1 == 5 && sec1_en) ? 1'b1 : 1'b0;
+    assign min1_en = (min0 == 9 && min0_en) ? 1'b1 : 1'b0;
+    assign hrs0_en = (min1 == 5 && min1_en) ? 1'b1 : 1'b0;
+    assign hrs1_en = ((hrs0 == 9 | (hrs1 == 2 & hrs0 == 3)) && hrs0_en) ? 1'b1 : 1'b0;
     
 endmodule
