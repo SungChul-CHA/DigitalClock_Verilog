@@ -37,7 +37,14 @@ module debounce(clk, rst, btn_in, btn_out, btn_out_pulse);
         end
     end
 
-    assign btn_out = btn_in_d[3]; //debounced button stable out
+    reg [$clog2(6000000):0] count;
+    always @ (posedge clk, posedge rst) begin
+        if (rst) count <= 0;
+        else if (btn_in_d[3]) 
+            if (count > 6000000) count <= 0;
+            else count <= count + 1;
+    end
+    
     assign set = (btn_in_d[1] != btn_in_d[2]) ? 1 : 0; //determine when to reset counter
     
     always @(posedge clk or posedge rst) begin
@@ -45,6 +52,7 @@ module debounce(clk, rst, btn_in, btn_out, btn_out_pulse);
         else btn_in_d[4] <= btn_in_d[3];
     end
 
+    assign btn_out = (count > 6000000) ? btn_in_d[3] : 0;
     assign btn_out_pulse = btn_in_d[3] & (~btn_in_d[4]); //debounced button pulse out
     
 endmodule
