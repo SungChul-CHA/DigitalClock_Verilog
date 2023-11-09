@@ -110,11 +110,13 @@ module clock(
             else hrs0 <= hrs0 + 1;
         else if (digit == 6'b000010)
             if (up) begin
-                if (hrs0 == 9) hrs0 <= 0;
+                if (hrs1 != 2 & hrs0 == 9) hrs0 <= 0;
+                else if (hrs1 == 2 & hrs0 == 3) hrs0 <= 0;
                 else hrs0 <= hrs0 + 1;
             end
             else if(down) begin
-                if (hrs0 == 0) hrs0 <= 9;
+                if (hrs1 != 2 && hrs0 == 0) hrs0 <= 9;
+                else if (hrs1 == 2 && hrs0 == 0) hrs0 <= 3;
                 else hrs0 <= hrs0 - 1;
             end
     end
