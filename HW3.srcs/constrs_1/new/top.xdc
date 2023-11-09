@@ -1,13 +1,13 @@
 # BTN for power on reset
 set_property IOSTANDARD LVCMOS25 [get_ports reset_poweron]
-set_property PACKAGE_PIN T18 [get_ports reset_poweron]
+set_property PACKAGE_PIN R16 [get_ports reset_poweron]
 
 # BTN for clock
 set_property IOSTANDARD LVCMOS25 [get_ports {btn[*]}]
-set_property PACKAGE_PIN P16 	[get_ports {btn[0]}]
-set_property PACKAGE_PIN N15 [get_ports {btn[1]}]
-set_property PACKAGE_PIN R18 	[get_ports {btn[2]}]
-set_property PACKAGE_PIN R16 	[get_ports {btn[3]}]
+set_property PACKAGE_PIN T18 	[get_ports {btn[0]}]
+set_property PACKAGE_PIN P16    [get_ports {btn[1]}]
+set_property PACKAGE_PIN N15 	[get_ports {btn[2]}]
+set_property PACKAGE_PIN R18 	[get_ports {btn[3]}]
 
 # CLK_100M
 set_property IOSTANDARD LVCMOS25 [get_ports clk]

@@ -26,11 +26,11 @@ module clock(
     input en,
     input clk_1hz,
     output reg [3:0] sec0,
-    output reg [2:0] sec1,
+    output reg [3:0] sec1,
     output reg [3:0] min0,
-    output reg [2:0] min1,
+    output reg [3:0] min1,
     output reg [3:0] hrs0,
-    output reg [2:0] hrs1
+    output reg [3:0] hrs1
     );
     
     wire sec1_en, min0_en, min1_en,
