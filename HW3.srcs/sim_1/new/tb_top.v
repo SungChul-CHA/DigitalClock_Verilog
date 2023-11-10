@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2023/11/09 11:37:23
+// Create Date: 2023/11/10 12:02:06
 // Design Name: 
 // Module Name: tb_top
 // Project Name: 
@@ -21,11 +21,10 @@
 
 
 module tb_top;
-reg clk, reset_poweron;
+reg clk = 1, reset_poweron;
 reg [3:0] btn;
-wire [7:0] seg_data;
+wire [7:0] seg_data, leds;
 wire [5:0] seg_com;
-
 
 always begin
     #5;
@@ -34,11 +33,22 @@ end
 
 initial begin
     reset_poweron = 1;
-    clk = 1;
-    #12;
+    #8;
     reset_poweron = 0;
+    btn[3] = 0;
+    #500000;
+    btn[3] = 1;
+    #600000;
+    btn[3] = 0;
+    #60000;
+    btn[3] = 1;
+    #900;
+    $stop;
+
+
 end
 
-top dut (clk, reset_poweron, btn, seg_data, seg_com);
 
+
+top dut (clk, reset_poweron, btn, seg_data, seg_com, leds);
 endmodule
