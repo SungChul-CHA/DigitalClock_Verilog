@@ -22,7 +22,7 @@ module top (
     wire locked, rst; 
     
     localparam CLOCK_ST = 3'd0, SWATCH_ST = 3'd1,
-    TIMER_ST = 3'd2, ALARM_ST = 3'd3, ADJUST_ST = 3'd4;
+    TIMER_ST = 3'd2, ALARM_ST = 3'd3, SETTING_ST = 3'd4;
     
     // clk
     //for speed control: SIZE=6000000(x1), SIZE=600000(x10), SIZE=6000(x1000), SIZE=60 (for simulation) / 8hz -> SIZE = 750000
@@ -45,11 +45,11 @@ module top (
     
     always @ (*) begin
         case (c_state)
-            CLOCK_ST: if(btn_pulse[3]) n_state = SWATCH_ST; else n_state = CLOCK_ST;
-            SWATCH_ST: if(btn_pulse[2]) n_state = CLOCK_ST; else if (btn_pulse[3]) n_state = TIMER_ST; else n_state = SWATCH_ST;
-            TIMER_ST: if (btn_1s[2]) n_state = ADJUST_ST; else if (btn_pulse[3]) n_state = ALARM_ST; else n_state = TIMER_ST;
-            ALARM_ST: if(btn_1s[2]) n_state = ADJUST_ST; else if (btn_pulse[3]) n_state = CLOCK_ST; else n_state = ALARM_ST;
-            ADJUST_ST: if(btn_pulse[2]) n_state = CLOCK_ST; else n_state = ADJUST_ST;
+            CLOCK_ST: if(btn_1s[2]) n_state = SETTING_ST; else if(mode) n_state = SWATCH_ST; else n_state = CLOCK_ST;
+            SWATCH_ST: if(reset) n_state = CLOCK_ST; else if (mode) n_state = TIMER_ST; else n_state = SWATCH_ST;
+            TIMER_ST: if (btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = ALARM_ST; else n_state = TIMER_ST;
+            ALARM_ST: if(btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = CLOCK_ST; else n_state = ALARM_ST;
+            SETTING_ST: if(reset) n_state = CLOCK_ST; else n_state = SETTING_ST;
             default: n_state = CLOCK_ST;
         endcase
     end
@@ -61,7 +61,7 @@ module top (
             SWATCH_ST: enable = 5'b00010;
             TIMER_ST: enable = 5'b00100;
             ALARM_ST: enable = 5'b01000;
-            ADJUST_ST: enable = 5'b10000;
+            SETTING_ST: enable = 5'b10000;
             default: enable = 5'b00001;
         endcase
     end
@@ -105,7 +105,7 @@ module top (
                 hrs0_in = hrs0[3];
                 hrs1_in = hrs1[3];
             end
-            ADJUST_ST: begin
+            SETTING_ST: begin
                 sec0_in = sec0[4];
                 sec1_in = sec1[4];
                 min0_in = min0[4];
