@@ -13,13 +13,22 @@ module top (
     
     wire clk_6mhz, clk_8hz, clk_1hz;
     wire [6:0] sec0_out, sec1_out, min0_out, min1_out, hrs0_out, hrs1_out; 
-    wire [3:0] sec0[4:0], sec1[4:0], min0[4:0], min1[4:0], hrs0[4:0], hrs1[4:0];
-    reg [3:0] sec0_in, sec1_in, min0_in, min1_in, hrs0_in, hrs1_in;
-    reg [5:0] digit;
+    // 0 : clock, 1 : stop watch, 2 : timer, 3 : alarm
+    wire [3:0] sec0[3:0], sec1[3:0], min0[3:0], min1[3:0], hrs0[3:0], hrs1[3:0];
     wire [3:0] btn_1s;
     wire [3:0] btn_pulse; 
     wire left, up, reset, mode;
+    wire seg_shift;
     wire locked, rst; 
+    wire flag_2hz;
+    
+    reg [5:0] seg_com_s;
+    reg [5:0] digit;
+    reg [5:0] digit_s;
+    reg [4:0] enable;
+    reg [3:0] sec0_in, sec1_in, min0_in, min1_in, hrs0_in, hrs1_in;
+    reg [2:0] c_state, n_state, l_state;
+    reg [2:0] setting;
     
     localparam CLOCK_ST = 3'd0, SWATCH_ST = 3'd1,
     TIMER_ST = 3'd2, ALARM_ST = 3'd3, SETTING_ST = 3'd4;
@@ -30,24 +39,48 @@ module top (
     clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk);
     gen_counter_en #(.SIZE(750000)) gen_clock_en_inst0 (clk_6mhz, rst, clk_8hz);
     gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst1 (clk_6mhz, rst, clk_1hz);
+    
+    gen_counter_en #(.SIZE(10000)) gen_clock_en_inst3 (clk_6mhz, rst, seg_shift);   // SIZE = 10000
+    clk_divider #(.DIVISOR(3000000)) clk_divider_inst (clk_6mhz, |{setting}, flag_2hz);
+
 
     //btn
     assign rst = reset_poweron | (~locked); 
-    debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, btn_1s, btn_pulse);
     assign {mode, reset, up, left} = btn_pulse;
+    assign seg_com = (|{setting}) ? seg_com_s & ~digit_s : seg_com_s;
 
-    
-    reg [2:0] c_state, n_state, l_state;
-    always @ (posedge clk, posedge rst) begin
+    // c_state
+    always @ (posedge clk_6mhz, posedge rst) begin
         if(rst) c_state <= CLOCK_ST;
         else c_state <= n_state;
     end
     
-    always @ (posedge clk, posedge rst) begin
+    // l_state
+    always @ (posedge clk_6mhz, posedge rst) begin
         if (rst) l_state <= 0;
         else if (c_state != SETTING_ST) l_state = c_state;
     end
     
+    // digit_s ±ô¹ÚÀÓ
+    always @ (posedge clk_6mhz, posedge rst) begin
+        if (rst) digit_s <= 6'b100000;
+        else if (flag_2hz) digit_s <= digit;
+        else digit_s <= 0;
+    end
+    
+    // seg_com ±ôºýÀÓ
+    always @ (posedge clk_6mhz, posedge rst) begin
+        if (rst) seg_com_s <= 6'b100000;
+        else if (seg_shift) seg_com_s <= {seg_com_s[0], seg_com_s[5:1]};
+    end
+    
+    // digit shift
+    always @ (posedge clk_6mhz, posedge rst) begin
+        if (rst) digit <= 6'b100000;
+        else if (|{setting} & left) digit <= {digit[0], digit[5:1]};
+    end
+    
+    // n_state
     always @ (c_state, btn_1s[2], mode, reset) begin
         case (c_state)
             CLOCK_ST: if(btn_1s[2]) n_state = SETTING_ST; else if(mode) n_state = SWATCH_ST; else n_state = CLOCK_ST;
@@ -59,20 +92,19 @@ module top (
         endcase
     end
     
-    reg [4:0] enable;
-    always @ (*) begin
+    // enable
+    always @ (c_state) begin
         case (c_state)
-            CLOCK_ST: enable = 5'b00001;
-            SWATCH_ST: enable = 5'b00011;
-            TIMER_ST: enable = 5'b00101;
-            ALARM_ST: enable = 5'b01001;
-            SETTING_ST: enable = 5'b10000;
-            default: enable = 5'b00001;
+            CLOCK_ST: enable = 4'b1001;
+            SWATCH_ST: enable = 4'b1011;
+            TIMER_ST: enable = 4'b1101;
+            ALARM_ST: enable = 4'b1001;
+            default: enable = 4'b0000;
         endcase
     end
-
-    reg [2:0] setting;
-    always @ (*) begin
+    
+    // setting
+    always @ (c_state) begin
         if (c_state == SETTING_ST) 
             if (l_state == CLOCK_ST) setting = 3'b001;
             else if (l_state == TIMER_ST) setting = 3'b010;
@@ -81,15 +113,7 @@ module top (
         else setting = 0;
     end
     
-    always @ (posedge clk_6mhz, posedge rst) begin
-        if (rst) digit <= 6'b100000;
-        else if (|{setting} & left) digit <= {digit[0], digit[5:1]};
-    end
-    
-    
-    clock clock_inst (clk_6mhz, rst, enable[0], clk_1hz, setting[0], digit, up, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
-    stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], leds);
-    
+    // time_in
     always @ (*) begin
         case (c_state)
             CLOCK_ST: begin
@@ -169,41 +193,6 @@ module top (
         endcase
     end
     
-    
-   
-    
-    
-    
-    //7-seg decoder
-    dec7 dec_sec0_inst (sec0_in, sec0_out); 
-    dec7 dec_sec1_inst (sec1_in, sec1_out); 
-    dec7 dec_min0_inst (min0_in, min0_out); 
-    dec7 dec_min1_inst (min1_in, min1_out); 
-    dec7 dec_hrs0_inst (hrs0_in, hrs0_out); 
-    dec7 dec_hrs1_inst (hrs1_in, hrs1_out);
-
-    // seg_com
-    wire seg_shift;
-    gen_counter_en #(.SIZE(10000)) gen_clock_en_inst3 (clk_6mhz, rst, seg_shift);   // SIZE = 10000
-
-    wire flag_2hz;
-    clk_divider #(.DIVISOR(3000000)) clk_divider_inst (clk_6mhz, |{setting}, flag_2hz);
-    
-    reg [5:0] digit_s;
-    always @ (posedge clk, posedge rst) begin
-        if (rst) digit_s <= 6'b100000;
-        else if (flag_2hz) digit_s <= digit;
-        else digit_s <= 0;
-    end
-    
-    reg [5:0] seg_com_s;
-    always @ (posedge clk_6mhz, posedge rst) begin
-        if (rst) seg_com_s <= 6'b100000;
-        else if (seg_shift) seg_com_s <= {seg_com_s[0], seg_com_s[5:1]};
-    end
-    
-    assign seg_com = (|{setting}) ? seg_com_s & ~digit_s : seg_com_s;
-
     // output
     always @ (seg_com) begin
         case (seg_com)
@@ -216,5 +205,21 @@ module top (
             default: seg_data = 8'b0; 
         endcase
     end
+    
+
+    clock clock_inst (clk_6mhz, rst, enable[0], clk_1hz, digit, up & setting[0], sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
+    stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], leds);
+//    timer timer_inst (clk_6mhz, rst, enable[2], clk_8hz, clk_1hz, btn_pulse[3:0], btn[);
+    
+    debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, btn_1s, btn_pulse);
+    
+    //7-seg decoder
+    dec7 dec_sec0_inst (sec0_in, sec0_out); 
+    dec7 dec_sec1_inst (sec1_in, sec1_out); 
+    dec7 dec_min0_inst (min0_in, min0_out); 
+    dec7 dec_min1_inst (min1_in, min1_out); 
+    dec7 dec_hrs0_inst (hrs0_in, hrs0_out); 
+    dec7 dec_hrs1_inst (hrs1_in, hrs1_out);
+
 
 endmodule

@@ -64,7 +64,7 @@ module stop_watch(
         else if (lap & reset) lap <= 0;
     end
     
-    clock clock_inst_s (clk, clear, busy, clk_1hz, sec0, sec1, min0, min1, hrs0, hrs1);
+    clock clock_inst_s (clk, clear, busy, clk_1hz, , , sec0, sec1, min0, min1, hrs0, hrs1);
     
     assign sec0_out = (lap) ? sec0_out: sec0;
     assign sec1_out = (lap) ? sec1_out: sec1;
