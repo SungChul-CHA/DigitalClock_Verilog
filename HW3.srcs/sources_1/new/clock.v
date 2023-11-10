@@ -1,22 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2023/11/07 19:58:44
-// Design Name: 
-// Module Name: clock
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
+//
+//
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -84,6 +69,6 @@ module clock(
     assign min1_en = (min0 == 9 && min0_en) ? 1'b1 : 1'b0;
     assign hrs0_en = (min1 == 5 && min1_en) ? 1'b1 : 1'b0;
     assign hrs1_en = ((hrs0 == 9 | (hrs1 == 2 & hrs0 == 3)) && hrs0_en) ? 1'b1 : 1'b0;
-    assign hrs2_rs = (hrs1 == 2 & hrs0 == 3 && hrs1_en) ? 1'b1 : 1'b0;  // hrs2_rs ∞À¡ı æ»µ 
+    assign hrs2_rs = (hrs1 == 2 & hrs0 == 3 && hrs1_en) ? 1'b1 : 1'b0;  
      
 endmodule

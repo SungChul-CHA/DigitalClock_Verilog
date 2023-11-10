@@ -9,6 +9,7 @@
 
 module debounce(clk, rst, btn_in, btn_out, btn_out_pulse);
 
+    parameter CLK = 6000000;
     parameter SIZE = 16; //if pressed for 1/clk*2^(SIZE-1)sec, it can be debounced. 5.46ms for 6MHz
     parameter BTN_WIDTH = 5;
     
@@ -37,12 +38,13 @@ module debounce(clk, rst, btn_in, btn_out, btn_out_pulse);
         end
     end
 
-    reg [$clog2(6000000):0] count;
+    reg [$clog2(CLK):0] count;
     always @ (posedge clk, posedge rst) begin
         if (rst) count <= 0;
-        else if (btn_in_d[3]) 
-            if (count > 6000000) count <= 0;
+        else if (o != 0) 
+            if (count > CLK) count <= 0;
             else count <= count + 1;
+        else count <= 0;
     end
     
     assign set = (btn_in_d[1] != btn_in_d[2]) ? 1 : 0; //determine when to reset counter
