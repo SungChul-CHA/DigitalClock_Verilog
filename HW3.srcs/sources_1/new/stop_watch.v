@@ -1,21 +1,6 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
 // 
-// Create Date: 2023/11/09 19:21:08
-// Design Name: 
-// Module Name: stop_watch
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +49,7 @@ module stop_watch(
         else if (lap & reset) lap <= 0;
     end
     
-    clock clock_inst_s (clk, clear, busy, clk_1hz, , , sec0, sec1, min0, min1, hrs0, hrs1);
+    clock clock_inst_s (clk, clear, busy, clk_1hz, , , , sec0, sec1, min0, min1, hrs0, hrs1);
     
     assign sec0_out = (lap) ? sec0_out: sec0;
     assign sec1_out = (lap) ? sec1_out: sec1;

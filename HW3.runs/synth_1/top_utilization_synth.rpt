@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2022.2 (win64) Build 3671981 Fri Oct 14 05:00:03 MDT 2022
-| Date         : Fri Nov 10 23:59:56 2023
+| Date         : Sat Nov 11 00:24:23 2023
 | Host         : TFG5276XG running 64-bit major release  (build 9200)
 | Command      : report_utilization -file top_utilization_synth.rpt -pb top_utilization_synth.pb
 | Design       : top
@@ -31,8 +31,8 @@ Table of Contents
 +-------------------------+------+-------+------------+-----------+-------+
 |        Site Type        | Used | Fixed | Prohibited | Available | Util% |
 +-------------------------+------+-------+------------+-----------+-------+
-| Slice LUTs*             |  323 |     0 |          0 |     53200 |  0.61 |
-|   LUT as Logic          |  323 |     0 |          0 |     53200 |  0.61 |
+| Slice LUTs*             |  328 |     0 |          0 |     53200 |  0.62 |
+|   LUT as Logic          |  328 |     0 |          0 |     53200 |  0.62 |
 |   LUT as Memory         |    0 |     0 |          0 |     17400 |  0.00 |
 | Slice Registers         |  324 |     0 |          0 |    106400 |  0.30 |
 |   Register as Flip Flop |  276 |     0 |          0 |    106400 |  0.26 |
@@ -149,11 +149,11 @@ Warning! LUT value is adjusted to account for LUT combining.
 | Ref Name | Used | Functional Category |
 +----------+------+---------------------+
 | FDCE     |  235 |        Flop & Latch |
-| LUT5     |  103 |                 LUT |
-| LUT6     |  101 |                 LUT |
-| LUT4     |   79 |                 LUT |
+| LUT6     |  106 |                 LUT |
+| LUT5     |  106 |                 LUT |
+| LUT4     |   76 |                 LUT |
 | LUT3     |   59 |                 LUT |
-| LUT2     |   49 |                 LUT |
+| LUT2     |   50 |                 LUT |
 | LDCE     |   48 |        Flop & Latch |
 | CARRY4   |   42 |          CarryLogic |
 | FDRE     |   33 |        Flop & Latch |

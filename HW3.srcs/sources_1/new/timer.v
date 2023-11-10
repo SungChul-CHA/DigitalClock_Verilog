@@ -1,26 +1,25 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
 // 
-// Create Date: 2023/11/09 19:21:20
-// Design Name: 
-// Module Name: timer
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
 
 module timer(
-
+    input clk,
+    input rst,
+    input en,
+    input clk_8hz,
+    input clk_1hz,
+    input [3:0] btn_pulse,
+    input setting,
+    output sec0,
+    output sec1,
+    output min0,
+    output min1,
+    output hrs0,
+    output hrs1,
+    output [7:0] leds
     );
+    
 endmodule
