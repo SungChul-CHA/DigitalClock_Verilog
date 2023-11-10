@@ -7,7 +7,7 @@ module top (
     input reset_poweron,
     input [3:0] btn, 
     output reg [7:0] seg_data, 
-    output reg [5:0] seg_com,
+    output [5:0] seg_com,
     output [7:0] leds
     );
     
@@ -83,7 +83,7 @@ module top (
     
     always @ (posedge clk_6mhz, posedge rst) begin
         if (rst) digit <= 6'b100000;
-        else if (setting & left) digit <= {digit[0], digit[5:1]};
+        else if (|{setting} & left) digit <= {digit[0], digit[5:1]};
     end
     
     
@@ -170,6 +170,10 @@ module top (
     end
     
     
+   
+    
+    
+    
     //7-seg decoder
     dec7 dec_sec0_inst (sec0_in, sec0_out); 
     dec7 dec_sec1_inst (sec1_in, sec1_out); 
@@ -181,10 +185,24 @@ module top (
     // seg_com
     wire seg_shift;
     gen_counter_en #(.SIZE(10000)) gen_clock_en_inst3 (clk_6mhz, rst, seg_shift);   // SIZE = 10000
-    always @ (posedge clk_6mhz, posedge rst) begin
-        if (rst) seg_com <= 6'b100000;
-        else if (seg_shift) seg_com <= {seg_com[0], seg_com[5:1]};
+
+    wire flag_2hz;
+    clk_divider #(.DIVISOR(3000000)) clk_divider_inst (clk_6mhz, |{setting}, flag_2hz);
+    
+    reg [5:0] digit_s;
+    always @ (posedge clk, posedge rst) begin
+        if (rst) digit_s <= 6'b100000;
+        else if (flag_2hz) digit_s <= digit;
+        else digit_s <= ~digit;
     end
+    
+    reg [5:0] seg_com_s;
+    always @ (posedge clk_6mhz, posedge rst) begin
+        if (rst) seg_com_s <= 6'b100000;
+        else if (seg_shift) seg_com_s <= {seg_com_s[0], seg_com_s[5:1]};
+    end
+    
+    assign seg_com = (|{setting}) ? seg_com_s & ~digit_s : seg_com_s;
 
     // output
     always @ (seg_com) begin
