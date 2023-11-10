@@ -36,30 +36,22 @@ module stop_watch(
     output reg [7:0] led_out
     );
     
+    wire [3:0] sec0, min0, hrs0;
+    wire [3:0] sec1, min1, hrs1;
     reg busy, lap;
+    reg clear;
+    reg [7:0] leds;
     
     wire start, reset;
     assign {reset, start} = btn_pulse;
     
-    reg clear;
+    
     always @ (posedge clk, posedge rst) begin
         if (rst) clear <= rst;
-        else if (~en & ~busy & ~lap & reset) clear <= 1;
+        else if (~en | (~busy & ~lap & reset)) clear <= 1;
         else clear <= 0;
     end
     
-    reg [7:0] leds;
-    always @ (posedge clk_8hz, posedge clear) begin
-        if (clear) leds <= 8'b11110000;
-        else if (busy & clk_8hz) leds <= {leds[0], leds[7:1]};
-        else leds <= leds;
-    end
-    
-    always @ (posedge clk, posedge clear) begin
-        if (clear) led_out <= 0;
-        else if (busy | lap) led_out <= leds;
-    end
-        
     always @ (posedge clk, posedge clear) begin
         if (clear) busy <= 0;
         else if(~busy & start) busy <= 1;
@@ -72,9 +64,7 @@ module stop_watch(
         else if (lap & reset) lap <= 0;
     end
     
-    wire [3:0] sec0, min0, hrs0;
-    wire [3:0] sec1, min1, hrs1;
-    clock clock_inst (clk, clear, busy, clk_1hz, sec0, sec1, min0, min1, hrs0, hrs1);
+    clock clock_inst_s (clk, clear, busy, clk_1hz, sec0, sec1, min0, min1, hrs0, hrs1);
     
     assign sec0_out = (lap) ? sec0_out: sec0;
     assign sec1_out = (lap) ? sec1_out: sec1;
@@ -82,5 +72,17 @@ module stop_watch(
     assign min1_out = (lap) ? min1_out: min1;
     assign hrs0_out = (lap) ? hrs0_out: hrs0;
     assign hrs1_out = (lap) ? hrs1_out: hrs1;
+    
+    always @ (posedge clk_8hz, posedge clear) begin
+        if (clear) leds <= 8'b11110000;
+        else if (busy & clk_8hz) leds <= {leds[0], leds[7:1]};
+        else leds <= leds;
+    end
+    
+    always @ (posedge clk, posedge clear) begin
+        if (clear) led_out <= 0;
+        else if (busy | lap) led_out <= leds;
+        else led_out <= 0;
+    end
     
 endmodule

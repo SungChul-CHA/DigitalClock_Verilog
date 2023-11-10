@@ -66,7 +66,7 @@ module top (
 
     
     clock clock_inst (clk_6mhz, rst, 1'b1, clk_1hz, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
-    
+    stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], leds);
     
     
     always @ (*) begin
