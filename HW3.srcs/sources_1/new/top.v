@@ -71,10 +71,24 @@ module top (
         endcase
     end
 
+    reg [2:0] setting;
+    always @ (*) begin
+        if (c_state == SETTING_ST) 
+            if (l_state == CLOCK_ST) setting = 3'b001;
+            else if (l_state == TIMER_ST) setting = 3'b010;
+            else if (l_state == ALARM_ST) setting = 3'b100;
+            else setting = 0;
+        else setting = 0;
+    end
     
-    clock clock_inst (clk_6mhz, rst, enable[0], clk_1hz, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
+    always @ (posedge clk_6mhz, posedge rst) begin
+        if (rst) digit <= 6'b100000;
+        else if (setting & left) digit <= {digit[0], digit[5:1]};
+    end
+    
+    
+    clock clock_inst (clk_6mhz, rst, enable[0], clk_1hz, setting[0], digit, up, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
     stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], leds);
-    
     
     always @ (*) begin
         case (c_state)
@@ -111,23 +125,50 @@ module top (
                 hrs1_in = hrs1[3];
             end
             SETTING_ST: begin
-                sec0_in = sec0[4];
-                sec1_in = sec1[4];
-                min0_in = min0[4];
-                min1_in = min1[4];
-                hrs0_in = hrs0[4];
-                hrs1_in = hrs1[4];
+                if (setting[0] == 1) begin
+                    sec0_in = sec0[0];
+                    sec1_in = sec1[0];
+                    min0_in = min0[0];
+                    min1_in = min1[0];
+                    hrs0_in = hrs0[0];
+                    hrs1_in = hrs1[0];
+                end
+                else if (setting[1] == 1) begin
+                    sec0_in = sec0[2];
+                    sec1_in = sec1[2];
+                    min0_in = min0[2];
+                    min1_in = min1[2];
+                    hrs0_in = hrs0[2];
+                    hrs1_in = hrs1[2];
+                end
+                else if (setting[2] == 1) begin
+                    sec0_in = sec0[3];
+                    sec1_in = sec1[3];
+                    min0_in = min0[3];
+                    min1_in = min1[3];
+                    hrs0_in = hrs0[3];
+                    hrs1_in = hrs1[3];
+                end
+                else begin
+                    sec0_in = 0;
+                    sec1_in = 0;
+                    min0_in = 0;
+                    min1_in = 0;
+                    hrs0_in = 0;
+                    hrs1_in = 0;
+                end
             end
             default : begin
-                sec0_in = sec0[0];
-                sec1_in = sec1[0];
-                min0_in = min0[0];
-                min1_in = min1[0];
-                hrs0_in = hrs0[0];
-                hrs1_in = hrs1[0];
+                sec0_in = sec0_in;
+                sec1_in = sec1_in;
+                min0_in = min0_in;
+                min1_in = min1_in;
+                hrs0_in = hrs0_in;
+                hrs1_in = hrs1_in;
             end
         endcase
     end
+    
     
     //7-seg decoder
     dec7 dec_sec0_inst (sec0_in, sec0_out); 
