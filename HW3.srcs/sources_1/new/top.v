@@ -37,19 +37,24 @@ module top (
     assign {mode, reset, up, left} = btn_pulse;
 
     
-    reg [2:0] c_state, n_state;
+    reg [2:0] c_state, n_state, l_state;
     always @ (posedge clk, posedge rst) begin
         if(rst) c_state <= CLOCK_ST;
         else c_state <= n_state;
     end
     
-    always @ (*) begin
+    always @ (posedge clk, posedge rst) begin
+        if (rst) l_state <= 0;
+        else if (c_state != SETTING_ST) l_state = c_state;
+    end
+    
+    always @ (c_state, btn_1s[2], mode, reset) begin
         case (c_state)
             CLOCK_ST: if(btn_1s[2]) n_state = SETTING_ST; else if(mode) n_state = SWATCH_ST; else n_state = CLOCK_ST;
             SWATCH_ST: if(reset) n_state = CLOCK_ST; else if (mode) n_state = TIMER_ST; else n_state = SWATCH_ST;
             TIMER_ST: if (btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = ALARM_ST; else n_state = TIMER_ST;
             ALARM_ST: if(btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = CLOCK_ST; else n_state = ALARM_ST;
-            SETTING_ST: if(reset) n_state = CLOCK_ST; else n_state = SETTING_ST;
+            SETTING_ST: if(reset) n_state = l_state; else n_state = SETTING_ST;
             default: n_state = CLOCK_ST;
         endcase
     end
@@ -58,16 +63,16 @@ module top (
     always @ (*) begin
         case (c_state)
             CLOCK_ST: enable = 5'b00001;
-            SWATCH_ST: enable = 5'b00010;
-            TIMER_ST: enable = 5'b00100;
-            ALARM_ST: enable = 5'b01000;
+            SWATCH_ST: enable = 5'b00011;
+            TIMER_ST: enable = 5'b00101;
+            ALARM_ST: enable = 5'b01001;
             SETTING_ST: enable = 5'b10000;
             default: enable = 5'b00001;
         endcase
     end
 
     
-    clock clock_inst (clk_6mhz, rst, 1'b1, clk_1hz, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
+    clock clock_inst (clk_6mhz, rst, enable[0], clk_1hz, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
     stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], leds);
     
     
