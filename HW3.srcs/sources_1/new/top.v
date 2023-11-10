@@ -15,11 +15,14 @@ module top (
     wire [6:0] sec0_out, sec1_out, min0_out, min1_out, hrs0_out, hrs1_out; 
     wire [3:0] sec0[4:0], sec1[4:0], min0[4:0], min1[4:0], hrs0[4:0], hrs1[4:0];
     reg [3:0] sec0_in, sec1_in, min0_in, min1_in, hrs0_in, hrs1_in;
-    wire clock_en;
     reg [5:0] digit;
     wire [3:0] btn_1s;
     wire [3:0] btn_pulse; 
+    wire left, up, reset, mode;
     wire locked, rst; 
+    
+    localparam CLOCK_ST = 3'd0, SWATCH_ST = 3'd1,
+    TIMER_ST = 3'd2, ALARM_ST = 3'd3, ADJUST_ST = 3'd4;
     
     // clk
     //for speed control: SIZE=6000000(x1), SIZE=600000(x10), SIZE=6000(x1000), SIZE=60 (for simulation) / 8hz -> SIZE = 750000
@@ -31,9 +34,8 @@ module top (
     //btn
     assign rst = reset_poweron | (~locked); 
     debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, btn_1s, btn_pulse);
+    assign {mode, reset, up, left} = btn_pulse;
 
-    localparam CLOCK_ST = 3'd0, SWATCH_ST = 3'd1,
-    TIMER_ST = 3'd2, ALARM_ST = 3'd3, ADJUST_ST = 3'd4;
     
     reg [2:0] c_state, n_state;
     always @ (posedge clk, posedge rst) begin
