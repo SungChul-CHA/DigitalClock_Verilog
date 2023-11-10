@@ -33,6 +33,7 @@ end
 
 initial begin
     reset_poweron = 1;
+    btn = 0;
     #8;
     reset_poweron = 0;
     btn[3] = 0;
@@ -41,8 +42,8 @@ initial begin
     #600000;
     btn[3] = 0;
     #60000;
-    btn[3] = 1;
-    #900;
+    btn[2] = 1;
+    #600000;
     $stop;
 
 

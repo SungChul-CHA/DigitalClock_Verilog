@@ -193,7 +193,7 @@ module top (
     always @ (posedge clk, posedge rst) begin
         if (rst) digit_s <= 6'b100000;
         else if (flag_2hz) digit_s <= digit;
-        else digit_s <= ~digit;
+        else digit_s <= 0;
     end
     
     reg [5:0] seg_com_s;
