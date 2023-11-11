@@ -20,7 +20,7 @@ module top (
     wire left, up, reset, mode;
     wire seg_shift;
     wire locked, rst; 
-    wire flag_2hz;
+    wire toggle_2hz;
     
     reg [5:0] seg_com_s;
     reg [5:0] digit;
@@ -41,7 +41,7 @@ module top (
     gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst1 (clk_6mhz, rst, clk_1hz);
     
     gen_counter_en #(.SIZE(10000)) gen_clock_en_inst3 (clk_6mhz, rst, seg_shift);   // SIZE = 10000
-    clk_divider #(.DIVISOR(3000000)) clk_divider_inst (clk_6mhz, |{setting}, flag_2hz);
+    clk_divider #(.DIVISOR(3000000)) clk_divider_inst (clk_6mhz,1'b1, toggle_2hz);
 
 
     //btn
@@ -64,7 +64,7 @@ module top (
     // digit_s ±ô¹ÚÀÓ
     always @ (posedge clk_6mhz, posedge rst) begin
         if (rst) digit_s <= 6'b100000;
-        else if (flag_2hz) digit_s <= digit;
+        else if (toggle_2hz) digit_s <= digit;
         else digit_s <= 0;
     end
     
@@ -77,7 +77,7 @@ module top (
     // digit shift
     always @ (posedge clk_6mhz, posedge rst) begin
         if (rst) digit <= 6'b100000;
-        else if (setting & left) digit <= {digit[0], digit[5:1]};
+        else if (setting && left) digit <= {digit[0], digit[5:1]};
     end
     
     // n_state
@@ -99,7 +99,7 @@ module top (
             SWATCH_ST: enable = 4'b1011;
             TIMER_ST: enable = 4'b1101;
             ALARM_ST: enable = 4'b1001;
-            default: enable = 4'b0000;
+            default: enable = 4'b0101;
         endcase
     end
     
@@ -209,10 +209,13 @@ module top (
     
     debounce #(.BTN_WIDTH(4)) debounce_btn0_inst (clk_6mhz, rst, btn, btn_1s, btn_pulse);
 
-    clock clock_inst (clk_6mhz, rst, enable[0], clk_1hz, setting[0], digit, up, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
-    stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], leds);
-//    timer timer_inst (clk_6mhz, rst, enable[2], clk_8hz, clk_1hz, btn_pulse[3:0], btn_1s[2], sec0[2], sec1[2], min0[2], min1[2], hrs0[2], hrs1[2], leds);
+    clock clock_inst (clk_6mhz, rst, enable[0] & ~setting[0], clk_1hz, setting[0], digit, up, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);
+    stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], led_s);
+    timer timer_inst (clk_6mhz, rst, enable[2], clk_8hz, clk_1hz, setting[1], digit, btn_pulse[2:0], toggle_2hz, sec0[2], sec1[2], min0[2], min1[2], hrs0[2], hrs1[2], led_t);
     
+    wire [7:0] led_s, led_t;
+    assign leds = (c_state == SWATCH_ST) ? led_s : 
+                (c_state == TIMER_ST) ?  led_t : 0;
     
     
     //7-seg decoder

@@ -22,7 +22,7 @@ module clock(
     );
     
     wire sec1_en, min0_en, min1_en,
-    hrs0_en, hrs1_en, hrs2_rs;
+    hrs0_en, hrs1_en;
     
     always @ (posedge clk, posedge rst) begin
         if(rst) sec0 <= 0;
@@ -103,6 +103,5 @@ module clock(
     assign min1_en = (min0 == 9 && min0_en) ? 1'b1 : 1'b0;
     assign hrs0_en = (min1 == 5 && min1_en) ? 1'b1 : 1'b0;
     assign hrs1_en = ((hrs0 == 9 | (hrs1 == 2 & hrs0 == 3)) && hrs0_en) ? 1'b1 : 1'b0;
-    assign hrs2_rs = (hrs1 == 2 & hrs0 == 3 && hrs1_en) ? 1'b1 : 1'b0;  
      
 endmodule

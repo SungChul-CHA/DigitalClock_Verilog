@@ -58,7 +58,7 @@ module stop_watch(
     assign hrs0_out = (lap) ? hrs0_out: hrs0;
     assign hrs1_out = (lap) ? hrs1_out: hrs1;
     
-    always @ (posedge clk_8hz, posedge clear) begin
+    always @ (posedge clk, posedge clear) begin
         if (clear) leds <= 8'b11110000;
         else if (busy & clk_8hz) leds <= {leds[0], leds[7:1]};
         else leds <= leds;
