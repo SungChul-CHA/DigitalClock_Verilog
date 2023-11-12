@@ -103,6 +103,8 @@ dec_in : 0부터 9까지 input 숫자. dec_out : 7-segment 데이터
 
 ---
 
+- [ ] 영어 나중에 고치기
+
 ## Digital Clock 동작
 
 - defualt : Clock display
