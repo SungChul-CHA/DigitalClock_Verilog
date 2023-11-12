@@ -275,3 +275,36 @@ SW1 : increase number under setting mode
 push SW2 for 1sec : go to setting mode
 SW0 : move cursor to left under setting mode
 SW1 : increase number under setting mode
+
+#### inout signals
+
+- en : enable
+- setting : SETTING_ST
+- digit : cursor
+- toggle : for led blink
+- t_INT : timer interrupt
+
+#### inner signals
+
+- busy : rise to high when running Timer
+- hrs1_ed ~ sec1_ed : signals to stop counting when higher digits reach to 0
+- ifFinish : rise to high when timer is finished + t_INT
+
+---
+
+### Alarm module
+
+- 1bit led on the end of the rightside is indication of alarm on/off
+- when alarm is running you can turn off the alarm with SW0~SW2
+
+push SW0, SW1 for 1 sec : turn on / turn off alarm -> toggle
+push SW2 for 1 sec : setting mode
+SW0 : move cursor to left under setting mode
+SW1 : increase number under setting mode
+
+#### inout signals
+
+- sec0_in ~ hrs1_in : clock output time data to see if the time is same with alarm time or not
+- a_INT : alarm interrupt
+- inOn : alarm on/off
+- sec0 ~ hrs1 : time data to display when c_state is in ALARM_ST

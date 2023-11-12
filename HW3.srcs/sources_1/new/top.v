@@ -263,11 +263,10 @@ module top (
     // enable                                                                                  
     always @ (c_state) begin                                            // clock : always, stop watch : in SWATCH_ST, timer : in TIMER_ST
         case (c_state)
-            CLOCK_ST: enable = 3'b101;                                 
-            SWATCH_ST: enable = 3'b111;                                // enable[2] : Timer 
-            TIMER_ST: enable = 3'b101;                                 // enable[1] : Stop Watch
-            ALARM_ST: enable = 3'b101;                                 // enable[0] : Clock
-            default: enable = 3'b101;
+            CLOCK_ST: enable = 3'b101;                                  // enable[2] : Timer         
+            SWATCH_ST: enable = 3'b111;                                 // enable[1] : Stop Watch
+            TIMER_ST: enable = 3'b101;                                  // enable[0] : Clock
+            default: enable = 3'b101;                                                                    
         endcase
     end
     
