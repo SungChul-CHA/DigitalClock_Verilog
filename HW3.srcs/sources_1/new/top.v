@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
+// LED on the right : alarm set
 // btn 0 ~ 4 -> SW0 ~ SW5. btn4 : reset hole module
 // Clock Mode : btn0, btn1, btn3 : next state , btn2 : setting state. 
 // Stop Watch Mode : btn0 : start/stop, btn1 : reset/lap time, btn2 : move to Clock state, btn3 : next state
@@ -44,17 +45,14 @@ module top (
     reg [5:0] seg_com_s;
     reg [5:0] digit;
     reg [5:0] digit_s;
-    
-    
-    
+
     
      // need for state
     // 0 : clock, 1 : stop watch, 2 : timer, 3 : alarm
     reg [2:0] c_state, n_state, l_state;
     reg [2:0] enable;
     reg [2:0] setting;
-    
-    wire a_INT;
+    wire a_INT, t_INT;
     
     
     // state parameter
@@ -67,7 +65,7 @@ module top (
     clk_wiz_0 clk_inst (clk_6mhz, reset_poweron, locked, clk);                      // generate 6mhz clk -> operate clk
     gen_counter_en #(.SIZE(750000)) gen_clock_en_inst0 (clk_6mhz, rst, clk_8hz);    // generate 8hz clk -> led shift clk
     gen_counter_en #(.SIZE(6000000)) gen_clock_en_inst1 (clk_6mhz, rst, clk_1hz);   // generate 1hz clk -> time clk
-    clk_divider #(.DIVISOR(3000000)) clk_divider_inst (clk_6mhz,1'b1, toggle_2hz);  // generate toggle signal in 2hz -> time blinking
+    clk_divider #(.DIVISOR(3000000)) clk_divider_inst (clk_6mhz,1'b1, toggle_2hz);  // generate toggle signal in 2hz -> blinking
     
     
     //btn
@@ -184,11 +182,13 @@ module top (
     end
    
    
+    // segment
     // SIZE = 10000
     gen_counter_en #(.SIZE(10000)) gen_clock_en_inst3 (clk_6mhz, rst, seg_shift);   // generate 600hz clk -> seg_com shift clk      
    
     // seg_com                
-    assign seg_com = (setting) ? seg_com_s & ~digit_s : seg_com_s;                  // time on cursor blink every 0.5s in setting mode
+    assign seg_com = (setting) ? seg_com_s & ~digit_s :
+                    (a_INT | t_INT) ? seg_com_s & {8{toggle_2hz}} : seg_com_s;      // time on cursor blink every 0.5s in setting mode
     
     always @ (posedge clk_6mhz, posedge rst) begin                                  // seg_com_s : shift to left in 600hz
         if (rst) seg_com_s <= 6'b100000;
@@ -218,11 +218,37 @@ module top (
     // n_state
     always @ (c_state, btn_1s[2], btn_pulse, a_INT) begin                                                  
         case (c_state)
-            CLOCK_ST: if (a_INT) n_state = ALARM_ST; else if(btn_1s[2]) n_state = SETTING_ST; else if(left | up | mode) n_state = SWATCH_ST; else n_state = CLOCK_ST;
-            SWATCH_ST: if (a_INT) n_state = ALARM_ST; else if(reset) n_state = CLOCK_ST; else if (mode) n_state = TIMER_ST; else n_state = SWATCH_ST;
-            TIMER_ST: if (a_INT) n_state = ALARM_ST; else if (btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = ALARM_ST; else n_state = TIMER_ST;
-            ALARM_ST: if(btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = CLOCK_ST; else n_state = ALARM_ST;
-            SETTING_ST: if (a_INT) n_state = ALARM_ST; else if(reset | mode) n_state = l_state; else n_state = SETTING_ST;
+            CLOCK_ST: begin
+                if (a_INT) n_state = ALARM_ST;  
+                else if (t_INT) n_state = TIMER_ST; 
+                else if(btn_1s[2]) n_state = SETTING_ST; 
+                else if(left | up | mode) n_state = SWATCH_ST; 
+                else n_state = CLOCK_ST;
+            end
+            SWATCH_ST: begin
+                if (a_INT) n_state = ALARM_ST; 
+                else if(reset) n_state = CLOCK_ST; 
+                else if (mode) n_state = TIMER_ST; 
+                else n_state = SWATCH_ST;
+            end
+            TIMER_ST: begin
+                if (a_INT) n_state = ALARM_ST; 
+                else if (btn_1s[2]) n_state = SETTING_ST; 
+                else if (mode) n_state = ALARM_ST; 
+                else n_state = TIMER_ST;
+            end
+            ALARM_ST: begin
+                if (t_INT) n_state = TIMER_ST; 
+                else if(btn_1s[2]) n_state = SETTING_ST; 
+                else if (mode) n_state = CLOCK_ST; 
+                else n_state = ALARM_ST;
+            end
+            SETTING_ST: begin
+                if (a_INT) n_state = ALARM_ST; 
+                else if (t_INT) n_state = TIMER_ST; 
+                else if(reset | mode) n_state = l_state; 
+                else n_state = SETTING_ST;
+            end
             default: n_state = CLOCK_ST;
         endcase
     end
@@ -233,13 +259,14 @@ module top (
         else if (c_state != SETTING_ST) l_state <= c_state;
     end
     
+    
     // enable                                                                                  
     always @ (c_state) begin                                            // clock : always, stop watch : in SWATCH_ST, timer : in TIMER_ST
         case (c_state)
-            CLOCK_ST: enable = 3'b001;                                 
-            SWATCH_ST: enable = 3'b011;                                // enable[2] : Timer 
+            CLOCK_ST: enable = 3'b101;                                 
+            SWATCH_ST: enable = 3'b111;                                // enable[2] : Timer 
             TIMER_ST: enable = 3'b101;                                 // enable[1] : Stop Watch
-            ALARM_ST: enable = 3'b001;                                 // enable[0] : Clock
+            ALARM_ST: enable = 3'b101;                                 // enable[0] : Clock
             default: enable = 3'b101;
         endcase
     end
@@ -254,10 +281,11 @@ module top (
         else setting = 0;
     end
     
+    
     // instantiation
     clock clock_inst (clk_6mhz, rst, enable[0] & ~setting[0], clk_1hz, setting[0], digit, up, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);    
     stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], led_s);
-    timer timer_inst (clk_6mhz, rst, enable[2], clk_8hz, clk_1hz, setting[1], digit, btn_pulse[2:0], toggle_2hz, sec0[2], sec1[2], min0[2], min1[2], hrs0[2], hrs1[2], led_t);
+    timer timer_inst (clk_6mhz, rst, enable[2], clk_8hz, clk_1hz, setting[1], digit, btn_pulse[2:0], toggle_2hz, t_INT, sec0[2], sec1[2], min0[2], min1[2], hrs0[2], hrs1[2], led_t);
     alarm alarm_inst (clk_6mhz, rst, setting[2], digit, btn_1s[1:0], btn_pulse[2:0], toggle_2hz, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0], a_INT, alarm_on, sec0[3], sec1[3], min0[3], min1[3], hrs0[3], hrs1[3], led_a);
 
 endmodule

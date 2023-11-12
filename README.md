@@ -1,4 +1,11 @@
-# Digital Clock with Verilog
+# Digital Clock
+
+## Target Board
+
+ZedBoard Zynq Evaluation and Development Kit
+Zynq-7000 SoC
+
+---
 
 ## FSM 구상
 
@@ -93,3 +100,35 @@ dec_in : 0부터 9까지 input 숫자. dec_out : 7-segment 데이터
 ## 시계 타이밍도 구상
 
 ![timing](./study/time_trans.jpeg)
+
+---
+
+## Digital Clock 동작
+
+- defualt : Clock display
+  SW0, SW1, SW3 : move to next mode(Stop Watch)
+  push SW2 for 1 sec : setting mode(time setting)
+
+  - SW0 : move cursor to left
+    SW1 : increase time
+
+- next mode : Stop Watch
+  SW0 : start/stop
+  SW1 : lap time/reset
+  SW2 : move to last mode (Clock)
+  SW3 : move to next mode (Timer)
+
+- next mode : Timer
+  SW0 : start/stop
+  SW1 : reset
+  push SW2 for 1 sec : setting mode(timer setting)
+
+  - SW0 : move cursor to left
+    SW1 : increase time
+    SW3 : move to next mode (Alarm)
+
+- next mode : Alarm
+  SW0, SW1, SW2 : when alarm running alarm off
+  push SW2 for 1 sec : setting mode(alarm setting)
+  - SW0 : move cursor to left
+    SW1 : increase time

@@ -1,6 +1,11 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// 
+// alarm alarm_inst (.clk(), .rst(), .setting(), .digit(), .btn_1s(), .btn_pulse(), .toggle_2hz(), .sec0_in(), .sec1_in(), .min0_in(), .min1_in(), .hrs0_in(), .hrs1_in(), .a_INT(), .isOn(), .sec0(), .sec1(), .min0(), .min1(), .hrs0(), .hrs1(), .led_out());
+// setting 1 -> setting state / 0 -> alarm display
+// btn_1s : alarm set / unset, btn_pulse : alarm off, btn_pulse[1] : up in setting state
+// a_INT : set to high when alarm on
+// isOn : set to high when alarm set
+//  Maker : CHA
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -30,14 +35,15 @@ module alarm(
     output reg [7:0] led_out
     );
     
-    wire up;
-    
     // btn
+    wire up;
     assign up = btn_pulse[1];
+
 
     // alarm on off
     always @ (posedge clk, posedge rst) begin
         if (rst) isOn <= 0;
+        else if (~isOn && setting) isOn <= 1;
         else if (btn_1s) isOn <= ~isOn;
     end
 
@@ -55,13 +61,17 @@ module alarm(
         ) a_INT <= 1;
     end
     
+    
     // led_out
     always @ (posedge clk, posedge rst) begin
-        if (rst | ~isOn | setting) led_out <= 0;
+        if (rst) led_out <= 0;
+        else if (~isOn | setting) led_out <= 0;
         else if (a_INT) led_out <= {8{toggle_2hz}};
         else led_out <= {{7{1'b0}}, isOn};
     end
     
+    
+    // time
     always @ (posedge clk, posedge rst) begin
         if(rst) sec0 <= 0;
         else if (digit == 6'b100000 & setting) begin

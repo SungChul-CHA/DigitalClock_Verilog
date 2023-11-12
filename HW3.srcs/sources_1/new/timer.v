@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// timer timer_inst (.clk(), .rst(), .en(), .clk_8hz(), .clk_1hz(), .setting(), .digit(), .btn_pulse(), .toggle(), .sec0(), .sec1(), .min0(), .min1(), .hrs0(), .hrs1(), .led_out());
+// timer timer_inst (.clk(), .rst(), .en(), .clk_8hz(), .clk_1hz(), .setting(), .digit(), .btn_pulse(), .toggle(), .t_INT(), .sec0(), .sec1(), .min0(), .min1(), .hrs0(), .hrs1(), .led_out());
 // en : 1 -> counting / 0 -> reset
 // clk_8hz for led shift, clk_1hz for time count, toggle : 2hz toggle signal for led blink
 // setting 0 -> count. setting 1 -> setting state
@@ -11,7 +11,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-// To do : t_INT π€¿∏∑Œ ª©∞Ì INT ∂ﬂ∏È Ω√∞Ëµµ ±Ù∫˝¿Ã∞‘ 
 module timer(
     input clk,
     input rst,
@@ -21,7 +20,8 @@ module timer(
     input setting,
     input [5:0] digit,
     input [2:0] btn_pulse,
-    input toggle,  
+    input toggle,
+    output reg t_INT,
     output reg [3:0] sec0,
     output reg [3:0] sec1,
     output reg [3:0] min0,
@@ -32,7 +32,7 @@ module timer(
     );
     
     wire start, up_reset;
-    reg busy, clear, t_INT;
+    reg busy, clear;
     reg [7:0] leds;
     wire sec1_en, min0_en, min1_en,
     hrs0_en, hrs1_en;
@@ -49,6 +49,7 @@ module timer(
         else clear <= 0;
     end
     
+    
     // Timer Inturrupt
     always @ (posedge clk, posedge clear) begin
         if (clear) t_INT <= 0;
@@ -64,6 +65,7 @@ module timer(
         else if ((busy & start) | setting) busy <= 0;
     end
     
+    
     // led toggle when timer finish
     always @ (posedge clk, posedge clear) begin
         if (clear) leds <= 8'b11110000;
@@ -73,10 +75,11 @@ module timer(
     end
 
     always @ (posedge clk, posedge clear) begin
-        if (clear) led_out <= 8'b11110000;
+        if (clear) led_out <= 0;
         else if (setting) led_out <= 0;
         else led_out <= leds;
     end
+    
     
     // busy∞° ∂ﬂ∏È down counter, setting¿Ã ∂ﬂ∏È 1 up
     always @ (posedge clk, posedge clear) begin
@@ -151,6 +154,7 @@ module timer(
                 else hrs1 <= hrs1 + 1;
             end
     end
+    
     
     assign sec1_en = (sec0 == 0 && clk_1hz) ? 1'b1 : 1'b0;
     assign min0_en = (sec1 == 0 && sec1_en) ? 1'b1 : 1'b0;
