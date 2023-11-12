@@ -33,7 +33,8 @@ module top (
     
     // need for output
     // leds
-    wire [7:0] led_s, led_t;
+    wire [7:0] led_s, led_t, led_a;
+    wire alarm_on;
     // time data
     wire [6:0] sec0_out, sec1_out, min0_out, min1_out, hrs0_out, hrs1_out; 
     reg [3:0] sec0_in, sec1_in, min0_in, min1_in, hrs0_in, hrs1_in;
@@ -45,11 +46,16 @@ module top (
     reg [5:0] digit_s;
     
     
+    
+    
      // need for state
     // 0 : clock, 1 : stop watch, 2 : timer, 3 : alarm
     reg [2:0] c_state, n_state, l_state;
-    reg [4:0] enable;
+    reg [2:0] enable;
     reg [2:0] setting;
+    
+    wire a_INT;
+    
     
     // state parameter
     localparam CLOCK_ST = 3'd0, SWATCH_ST = 3'd1,
@@ -71,8 +77,9 @@ module top (
     
     
     // led out
-    assign leds = (c_state == SWATCH_ST) ? led_s :                                  // s : stop watch, t : timer, MSB(right one) : alarm set or cancel signal
-                (c_state == TIMER_ST) ?  led_t : 0;
+    assign leds = (c_state == SWATCH_ST) ? led_s :                                  // s : stop watch, t : timer, LSB(right one) : alarm set or cancel signal
+                (c_state == TIMER_ST) ?  led_t :
+                (c_state == ALARM_ST) ? led_a : {{7{1'b0}}, alarm_on};
 
 
     // time output
@@ -209,13 +216,13 @@ module top (
     end
 
     // n_state
-    always @ (c_state, btn_1s[2], btn_pulse) begin                                                  // 알람 뜨면 ALARM_ST 로 넘어가게 설정 할것
+    always @ (c_state, btn_1s[2], btn_pulse, a_INT) begin                                                  
         case (c_state)
-            CLOCK_ST: if(btn_1s[2]) n_state = SETTING_ST; else if(left | up | mode) n_state = SWATCH_ST; else n_state = CLOCK_ST;
-            SWATCH_ST: if(reset) n_state = CLOCK_ST; else if (mode) n_state = TIMER_ST; else n_state = SWATCH_ST;
-            TIMER_ST: if (btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = ALARM_ST; else n_state = TIMER_ST;
+            CLOCK_ST: if (a_INT) n_state = ALARM_ST; else if(btn_1s[2]) n_state = SETTING_ST; else if(left | up | mode) n_state = SWATCH_ST; else n_state = CLOCK_ST;
+            SWATCH_ST: if (a_INT) n_state = ALARM_ST; else if(reset) n_state = CLOCK_ST; else if (mode) n_state = TIMER_ST; else n_state = SWATCH_ST;
+            TIMER_ST: if (a_INT) n_state = ALARM_ST; else if (btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = ALARM_ST; else n_state = TIMER_ST;
             ALARM_ST: if(btn_1s[2]) n_state = SETTING_ST; else if (mode) n_state = CLOCK_ST; else n_state = ALARM_ST;
-            SETTING_ST: if(reset | mode) n_state = l_state; else n_state = SETTING_ST;
+            SETTING_ST: if (a_INT) n_state = ALARM_ST; else if(reset | mode) n_state = l_state; else n_state = SETTING_ST;
             default: n_state = CLOCK_ST;
         endcase
     end
@@ -226,14 +233,14 @@ module top (
         else if (c_state != SETTING_ST) l_state <= c_state;
     end
     
-    // enable                                                                                  // enable 조절해서 alarm 끄는 기능 고려할것
-    always @ (c_state) begin                                            // clock : always, stop watch : in SWATCH_ST, timer : in TIMER_ST, alarm : not in SETTING_ST
+    // enable                                                                                  
+    always @ (c_state) begin                                            // clock : always, stop watch : in SWATCH_ST, timer : in TIMER_ST
         case (c_state)
-            CLOCK_ST: enable = 4'b1001;                                 // enable[3] : Alarm
-            SWATCH_ST: enable = 4'b1011;                                // enable[2] : Timer 
-            TIMER_ST: enable = 4'b1101;                                 // enable[1] : Stop Watch
-            ALARM_ST: enable = 4'b1001;                                 // enable[0] : Clock
-            default: enable = 4'b0101;
+            CLOCK_ST: enable = 3'b001;                                 
+            SWATCH_ST: enable = 3'b011;                                // enable[2] : Timer 
+            TIMER_ST: enable = 3'b101;                                 // enable[1] : Stop Watch
+            ALARM_ST: enable = 3'b001;                                 // enable[0] : Clock
+            default: enable = 3'b101;
         endcase
     end
     
@@ -248,9 +255,9 @@ module top (
     end
     
     // instantiation
-    clock clock_inst (clk_6mhz, rst, enable[0] & ~setting[0], clk_1hz, setting[0], digit, up, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);    // setting[0] 빼도 괜찮을듯
+    clock clock_inst (clk_6mhz, rst, enable[0] & ~setting[0], clk_1hz, setting[0], digit, up, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0]);    
     stop_watch swatch_inst (clk_6mhz, rst, enable[1], clk_8hz, clk_1hz, btn_pulse[1:0], sec0[1], sec1[1], min0[1], min1[1], hrs0[1], hrs1[1], led_s);
     timer timer_inst (clk_6mhz, rst, enable[2], clk_8hz, clk_1hz, setting[1], digit, btn_pulse[2:0], toggle_2hz, sec0[2], sec1[2], min0[2], min1[2], hrs0[2], hrs1[2], led_t);
-    
+    alarm alarm_inst (clk_6mhz, rst, setting[2], digit, btn_1s[1:0], btn_pulse[2:0], toggle_2hz, sec0[0], sec1[0], min0[0], min1[0], hrs0[0], hrs1[0], a_INT, alarm_on, sec0[3], sec1[3], min0[3], min1[3], hrs0[3], hrs1[3], led_a);
 
 endmodule
