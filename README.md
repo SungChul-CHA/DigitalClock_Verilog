@@ -219,8 +219,6 @@ push SW2 for 1sec : go to setting mode
 SW0 : move cursor to left under setting mode
 SW1 : increase number under setting mode
 
-![clock](/study/clock.mp4)
-
 #### inout signals
 
 - output : time data (4bits)
