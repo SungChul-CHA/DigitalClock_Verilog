@@ -123,7 +123,7 @@ module stop_watch(
     
     always @ (posedge clk, posedge clear) begin
         if (clear) hrs2_ed <= 0;
-        else if (hrs1 == 6) hrs2_ed <= 1;
+        else if (hrs1 == 5 & hrs1_en) hrs2_ed <= 1;
     end
     
     // big time stopwatch

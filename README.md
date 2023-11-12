@@ -112,13 +112,13 @@ dec_in : 0부터 9까지 input 숫자. dec_out : 7-segment 데이터
   - SW0 : move cursor to left
     SW1 : increase time
 
-- next mode : Stop Watch
+- Stop Watch
   SW0 : start/stop
   SW1 : lap time/reset
   SW2 : move to last mode (Clock)
   SW3 : move to next mode (Timer)
 
-- next mode : Timer
+- Timer
   SW0 : start/stop
   SW1 : reset
   push SW2 for 1 sec : setting mode(timer setting)
@@ -127,8 +127,151 @@ dec_in : 0부터 9까지 input 숫자. dec_out : 7-segment 데이터
     SW1 : increase time
     SW3 : move to next mode (Alarm)
 
-- next mode : Alarm
-  SW0, SW1, SW2 : when alarm running alarm off
+- Alarm
+  SW0, SW1, SW2 : when alarm running turn off the alarm
   push SW2 for 1 sec : setting mode(alarm setting)
   - SW0 : move cursor to left
     SW1 : increase time
+    push SW0, SW1 for 1 sec : set or unset an alarm
+
+---
+
+### Top module
+
+#### inout signals
+
+- input : 100MHZ clk, SW4 - reset, SW3 ~ SW0
+- output : 8bit segment data, 6bit segment location, 8bit led
+
+#### inner signals
+
+toggle_2hz : toggle every 0.5 sec
+btn_pulse : debounced switch pulse
+btn_1s : debounced switch pulse but 1sec later
+led_s : led out in Stop Watch state
+led_t : led out in Timer state
+led_a : led out in Alarm state
+
+alarm_on : turn on when alarm is set
+a_INT : turn to high when time matches to alarm time
+t_INT : turn to high when timer done
+
+enable : enable signal for each module
+setting : signal that indicate on SETTING_ST for each module
+enable[0], setting[0] : clock module
+enable[1] : stop_watch module
+enable[2], setting[1] : timer module
+setting[2] : timer module
+
+c_state : current state
+0 : CLOCK_ST
+1 : SWATCH_ST
+2 : TIMER_ST
+3 : ALARM_ST
+4 : SETTING_ST
+
+l_state : last state for setting mode
+FPGA need to store last state before entering SETTING_ST to return when setting finish.
+
+n_state : condition for move to other state
+
+#### Operation
+
+1. n_state changes depending on condition
+
+- if (a_INT) -> ALARM_ST
+- if (t_INT) -> TIMER_ST
+- btns -> specific state
+
+2. set seg_in depending on state
+   seg_in : time data(4bit)
+
+3. decode to segment data
+   seg_out : segment data(7bit)
+
+4. display seg_out as seg_data in condition of seg_com signal
+
+5. display leds depends on c_state
+
+##### seg_com
+
+- move to left(right circular shift) with 600hz
+- if (SETTING_ST) -> blink a number cursor on
+  I used digit to make this function
+- if (interrupt occur) -> blink whole number
+
+##### digit
+
+- 6bit signal to specify location of number
+- SW0 : move to left(right circular shift)
+
+---
+
+### Clock module
+
+- operate when enable is high
+- hold the time when setting is high
+- increase a number of time which digit is pointing when SETTING_ST
+
+push SW2 for 1sec : go to setting mode
+SW0 : move cursor to left under setting mode
+SW1 : increase number under setting mode
+
+#### inout signals
+
+- output : time data (4bits)
+- en : enable signal
+- setting : indication for SETTING_ST or not
+- digit : cursor
+- up : SW0
+
+#### inner signals
+
+- sec1_en ~ hrs1_en : use as a carry
+
+---
+
+### Stop Watch module
+
+- operate when en is high + busy rises to high
+- show milli sec before 59:59:99
+- Max time in countable 23:59:59
+- There is lap time function on my code. So it could be hard if stop watch is running or not. To prevent such inconvenience, led will be move to left(right circular shift) while busy is high.
+
+#### How to use
+
+defualt : mm:ss:00(milli sec)
+SW0 : start
+SW0 : stop when busy
+SW1 : reset when !busy
+SW1 : lap when busy -> stop watch still running in background
+SW1 : unlock the display when lap signal was high -> see the leds move or not
+
+push SW2 for 1sec : go to setting mode
+SW0 : move cursor to left under setting mode
+SW1 : increase number under setting mode
+
+#### inout signals
+
+- en : enable
+- time_out : time data(4 bits)
+- led_out : led shape
+
+#### inner signals
+
+- sec0 ~ hrs1 : small time for milli sec
+- sec0_b ~ hrs1_b : big time from 01:00:00 to 23:59:59
+- **busy** : turn to high when stop watch is running
+- **lap** : turn to high when you are watching lap time
+
+---
+
+### Timer module
+
+- operate when en is high + busy rises to high
+- SW0 : start/stop
+- SW1 : reset
+
+push SW2 for 1sec : go to setting mode
+SW0 : move cursor to left under setting mode
+SW1 : increase number under setting mode
