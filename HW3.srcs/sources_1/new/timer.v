@@ -1,10 +1,17 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// 
+// timer timer_inst (.clk(), .rst(), .en(), .clk_8hz(), .clk_1hz(), .setting(), .digit(), .btn_pulse(), .toggle(), .sec0(), .sec1(), .min0(), .min1(), .hrs0(), .hrs1(), .led_out());
+// en : 1 -> counting / 0 -> reset
+// clk_8hz for led shift, clk_1hz for time count, toggle : 2hz toggle signal for led blink
+// setting 0 -> count. setting 1 -> setting state
+// setting 0 -> btn_pulse[0] : start/stop, btn_pulse[1] : reset
+// setting 1 -> btn_pulse[0] : cursor left, btn_pulse[1] : increase time
+// Maker : CHA
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
 
+// To do : t_INT 밖으로 빼고 INT 뜨면 시계도 깜빡이게 
 module timer(
     input clk,
     input rst,
@@ -24,29 +31,40 @@ module timer(
     output reg [7:0] led_out
     );
     
+    wire start, up_reset;
+    reg busy, clear, t_INT;
+    reg [7:0] leds;
     wire sec1_en, min0_en, min1_en,
     hrs0_en, hrs1_en;
     wire hrs1_ed, hrs0_ed, min1_ed, min0_ed, sec1_ed, isFinish;
-    wire start, up_reset;
-    reg [7:0] leds;
-    reg busy, clear, t_INT;
     
+    // btn
     assign start = btn_pulse[0];
     assign up_reset = btn_pulse[1];
     
+    // clear
     always @ (posedge clk, posedge rst) begin
         if (rst) clear <= 1;
         else if (~en | (up_reset & ~setting)) clear <= 1;
         else clear <= 0;
     end
     
-    
+    // Timer Inturrupt
     always @ (posedge clk, posedge clear) begin
         if (clear) t_INT <= 0;
         else if (t_INT && btn_pulse) t_INT <= 0;
         else if (isFinish & busy) t_INT <= 1;
     end
     
+    // 현재 시간이 00:00:00이 아니고 timer 가 멈춰있을 때 start 누르면 1
+    // timer 동작 중 start 누르면 0, setting 뜨면 0
+    always @ (posedge clk, posedge clear) begin
+        if (clear) busy <= 0;
+        else if(~busy & start & ~setting & ~isFinish) busy <= 1;
+        else if ((busy & start) | setting) busy <= 0;
+    end
+    
+    // led toggle when timer finish
     always @ (posedge clk, posedge clear) begin
         if (clear) leds <= 8'b11110000;
         else if (t_INT) leds <= {8{toggle}};
@@ -55,20 +73,10 @@ module timer(
     end
 
     always @ (posedge clk, posedge clear) begin
-        if (clear) led_out <= 0;
+        if (clear) led_out <= 8'b11110000;
         else if (setting) led_out <= 0;
         else led_out <= leds;
     end
-    
-    
-    // 현재 시간이 00:00:00이 아니고 timer 가 멈춰있을 때 start 누르면 1
-    // timer 동작 중 start 누르면 0, setting 뜨면 0
-    always @ (posedge clk, posedge clear) begin
-        if (clear) busy <= 0;
-        else if(~busy & start & ~setting & ~t_INT) busy <= 1;
-        else if ((busy & start) | setting) busy <= 0;
-    end
-    
     
     // busy가 뜨면 down counter, setting이 뜨면 1 up
     always @ (posedge clk, posedge clear) begin
@@ -157,5 +165,4 @@ module timer(
     assign sec1_ed = (sec1 == 0 & min0_ed) ? 1'b1 : 1'b0;
     assign isFinish = (sec0 == 0 & sec1_ed) ? 1'b1 : 1'b0;
     
-
 endmodule
