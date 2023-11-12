@@ -2,6 +2,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // clock clock_inst (.clk(), .rst(), .en(), .clk_1hz(), .setting(), .digit(), .up(), .sec0(), .sec1(), .min0(), .min1(), .hrs0(), .hrs1());
 // en : 1 -> counting, en : 0 -> hold the time
+// setting : 0 -> clock state / 1 -> setting state 
 // digit : cursor 
 // maker : CHA
 // 
@@ -29,63 +30,73 @@ module clock(
     
     always @ (posedge clk, posedge rst) begin
         if(rst) sec0 <= 0;
-        else if (en & clk_1hz)
+        else if (en & clk_1hz) begin
             if(sec0 == 9) sec0 <= 0;
             else sec0 <= sec0 + 1;
-        else if (digit == 6'b100000 & setting)
+        end
+        else if (digit == 6'b100000 & setting) begin
             if (up) begin
                 if (sec0 == 9) sec0 <= 0;
                 else sec0 <= sec0 + 1;
             end
+        end
     end
     
     always @ (posedge clk, posedge rst) begin
         if(rst) sec1 <= 0;
-        else if (en & sec1_en)
+        else if (en & sec1_en) begin
             if(sec1 == 5) sec1 <= 0;
             else sec1 <= sec1 + 1;
-        else if (digit == 6'b010000 & setting)
+        end
+        else if (digit == 6'b010000 & setting) begin
             if (up) begin
                 if (sec1 == 5) sec1 <= 0;
                 else sec1 <= sec1 + 1;
             end
+        end
     end
     
     always @ (posedge clk, posedge rst) begin
         if(rst) min0 <= 0;
-        else if (en & min0_en)
+        else if (en & min0_en) begin
             if (min0 == 9) min0 <= 0;
             else min0 <= min0 + 1;
-        else if (digit == 6'b001000 & setting)
+        end
+        else if (digit == 6'b001000 & setting) begin
             if (up) begin
                 if (min0 == 9) min0 <= 0;
                 else min0 <= min0 + 1;
             end
+        end
     end
     
     always @ (posedge clk, posedge rst) begin
         if(rst) min1 <= 0;
-        else if (en & min1_en)
+        else if (en & min1_en) begin
             if (min1 == 5) min1 <= 0;
             else min1 <= min1 + 1;
-        else if (digit == 6'b000100 & setting)
+        end
+        else if (digit == 6'b000100 & setting) begin
             if (up) begin
                 if (min1 == 5) min1 <= 0;
                 else min1 <= min1 + 1;
             end
+        end
     end
     
     always @ (posedge clk, posedge rst) begin
         if(rst) hrs0 <= 0;
-        else if (en & hrs0_en)
+        else if (en & hrs0_en) begin
             if (hrs0 == 9 | (hrs1 == 2 & hrs0 == 3)) hrs0 <= 0;
             else hrs0 <= hrs0 + 1;
-        else if (digit == 6'b000010 & setting)
+        end
+        else if (digit == 6'b000010 & setting) begin
             if (up) begin
                 if (hrs1 != 2 & hrs0 == 9) hrs0 <= 0;
                 else if (hrs1 == 2 & hrs0 == 3) hrs0 <= 0;
                 else hrs0 <= hrs0 + 1;
             end
+        end
     end
     
     always @ (posedge clk, posedge rst) begin
@@ -94,11 +105,12 @@ module clock(
             if (hrs1 == 2) hrs1 <= 0;
             else hrs1 <= hrs1 + 1;
         end
-        else if (digit == 6'b000001 & setting)
+        else if (digit == 6'b000001 & setting) begin
             if (up) begin
                 if (hrs1 == 2) hrs1 <= 0;
                 else hrs1 <= hrs1 + 1;
             end
+        end
     end
     
     assign sec1_en = (sec0 == 9 && clk_1hz) ? 1'b1 : 1'b0;

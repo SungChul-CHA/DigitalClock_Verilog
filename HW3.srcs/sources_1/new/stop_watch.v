@@ -1,7 +1,11 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// 
-// 
+// stop_watch s_watch_inst (.clk(), .rst(), .en(), .clk_8hz(), .clk_1hz(), .btn_pulse(), .sec0_out(), .sec1_out(), .min0_out(), .min1_out(), .hrs0_out(), .hrs1_out(), .led_out());
+// en : 1 -> operate / 0 -> reset
+// clk_8hz for led shift, clk_1hz for counting time
+// btn[0] : start/stop, btn[1] : reset/lap time
+// Maker : CHA 
+//
 //////////////////////////////////////////////////////////////////////////////////
 
 
@@ -30,19 +34,21 @@ module stop_watch(
     wire start, reset;
     assign {reset, start} = btn_pulse;
     
-    
+    // clear
     always @ (posedge clk, posedge rst) begin
         if (rst) clear <= rst;
         else if (~en | (~busy & ~lap & reset)) clear <= 1;
         else clear <= 0;
     end
     
+    // busy : stop watch counting time
     always @ (posedge clk, posedge clear) begin
         if (clear) busy <= 0;
         else if(~busy & start) busy <= 1;
         else if (busy & start) busy <= 0;
     end
     
+    // lap : stop watch counting in background
     always @ (posedge clk, posedge clear) begin
         if (clear) lap <= 0;
         else if (busy & ~lap & reset) lap <= 1;
@@ -58,16 +64,17 @@ module stop_watch(
     assign hrs0_out = (lap) ? hrs0_out: hrs0;
     assign hrs1_out = (lap) ? hrs1_out: hrs1;
     
+    // leds : shift
     always @ (posedge clk, posedge clear) begin
         if (clear) leds <= 8'b11110000;
         else if (busy & clk_8hz) leds <= {leds[0], leds[7:1]};
         else leds <= leds;
     end
     
+    // led off when stop wath is not working
     always @ (posedge clk, posedge clear) begin
         if (clear) led_out <= 0;
         else if (busy | lap) led_out <= leds;
-        else led_out <= 0;
     end
     
 endmodule
