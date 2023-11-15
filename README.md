@@ -7,6 +7,8 @@ Zynq-7000 SoC
 
 ---
 
+- [ ] 알람이랑 타이머 인터럽트 동시 처리
+
 ## FSM 구상
 
 |       <b>FSM 1안</b>       |
@@ -102,8 +104,6 @@ dec_in : 0부터 9까지 input 숫자. dec_out : 7-segment 데이터
 ![timing](./study/time_trans.jpeg)
 
 ---
-
-- [ ] 영어 나중에 고치기
 
 ## Digital Clock 동작
 
