@@ -21,7 +21,7 @@ Zynq-7000 SoC
 
 |       <b>FSM 2안</b>        |
 | :-------------------------: |
-| ![FSM2](study/image-3.png)) |
+| ![FSM2](study/image-3.png) |
 
 ---
 
